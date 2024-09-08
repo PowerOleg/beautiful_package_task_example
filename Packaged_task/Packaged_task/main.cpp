@@ -4,8 +4,6 @@
 #include <future>
 #include <mutex>
 
-using namespace std;
-
 // Factorial function
 int factorial(int N)
 {
@@ -14,21 +12,21 @@ int factorial(int N)
         res *= i;
     }
 
-    cout << "Result is = " << res << "\n";
+    std::cout << "Result is = " << res << "\n";
     return res;
 }
 
 // packaged task
-deque<packaged_task<int()> > task_q;
-mutex mu;
-condition_variable cond;
+std::deque<std::packaged_task<int()> > task_q;
+std::mutex mu;
+std::condition_variable cond;
 
 void thread1()
 {
     // packaged task
-    packaged_task<int()> task;
+    std::packaged_task<int()> task;
     {
-        unique_lock<mutex> locker(mu);
+        std::unique_lock<std::mutex> locker(mu);
         cond.wait(locker, []() { return !task_q.empty(); });
         task = move(task_q.front());
         task_q.pop_front();
@@ -39,27 +37,27 @@ void thread1()
 // Driver Code
 int main()
 {
-    thread thread1(thread1);
+    std::thread t1(thread1);
 
     // Create a packaged_task<> that
     // encapsulated the callback i.e. a function
-    packaged_task<int()> task(bind(factorial, 5));
+    std::packaged_task<int()> task(std::bind(factorial, 5));
 
     // Fetch the associated future<>
     // from packaged_task<>
-    future<int> future = task.get_future();
+    std::future<int> future = task.get_future();
     {
-        lock_guard<mutex> locker(mu);
+        std::lock_guard<std::mutex> locker(mu);
         task_q.push_back(move(task));
     }
     cond.notify_one();
 
     // Fetch the result of packaged_task<>
-    cout << future.get();
+    std::cout << future.get();
 
     // Join the thread. Its blocking and
     // returns when thread is finished.
-    thread1.join();
+    t1.join();
 
     return 0;
 }
